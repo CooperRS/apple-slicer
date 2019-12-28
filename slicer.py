@@ -199,6 +199,8 @@ def parse_financial_reports(workingdir):
 def print_sales_by_corporation(sales, currencies, no_subtotals, only_subtotals):
     """Print sales grouped by Apple subsidiaries, by countries in which the sales have been made and by products sold."""
 
+    total_sum = Decimal(0)
+    total_sum_by_product = {}
     corporations = {}
 
     for country in sales:
@@ -206,10 +208,12 @@ def print_sales_by_corporation(sales, currencies, no_subtotals, only_subtotals):
 
     for corporation in corporations:
         corporation_sum = Decimal(0)
+        corporation_sum_by_product = {}
         print '\n\n' + apple.address(corporation)
 
         for countrycode in corporations[corporation]:
             country_sum = Decimal(0)
+            country_sum_by_product = {}
             country_currency = currencies[countrycode]
             products_sold = corporations[corporation][countrycode]
 
@@ -221,12 +225,23 @@ def print_sales_by_corporation(sales, currencies, no_subtotals, only_subtotals):
                 exchange_rate, tax_factor = currency_data[country_currency]
 
             for product in products_sold:
+                # Make sure by product keys exist
+                if product not in total_sum_by_product:
+                    total_sum_by_product[product] = Decimal(0)
+                if product not in corporation_sum_by_product:
+                    corporation_sum_by_product[product] = Decimal(0)
+                if product not in country_sum_by_product:
+                    country_sum_by_product[product] = Decimal(0)
+
                 quantity, amount = products_sold[product]
 
                 # subtract local tax(es) if applicable in country (f. ex. in JPY)
                 amount -= amount - amount * tax_factor
 
                 country_sum += amount
+                country_sum_by_product[product] += amount
+                corporation_sum_by_product[product] += amount * exchange_rate
+                total_sum_by_product[product] += amount * exchange_rate
 
                 # because of rounding errors, the per product amount can only serve as an informative estimate and is thus displayed with 4 fractional
                 # digits in order to convey that probably some rounding took place
@@ -243,8 +258,17 @@ def print_sales_by_corporation(sales, currencies, no_subtotals, only_subtotals):
             format_currency(country_sum), exchange_rate, format_currency(country_sum_in_local_currency), local_currency.replace('EUR', '€'))
 
             corporation_sum += country_sum_in_local_currency
+            total_sum += country_sum_in_local_currency
 
-        print '\n{0} Total:\t{1} {2}'.format(corporation, format_currency(corporation_sum), local_currency.replace('EUR', '€'))
+        print '\n'
+        for product in corporation_sum_by_product.keys():
+            print '{0} {1} Subtotal: {2} {3}'.format(product, corporation, format_currency(corporation_sum_by_product[product]), local_currency.replace('EUR', '€'))
+        print '{0} Subtotal: {1} {2}'.format(corporation, format_currency(corporation_sum), local_currency.replace('EUR', '€'))
+
+    print '\n'
+    for product in total_sum_by_product.keys():
+        print '{0} Total: {1} {2}'.format(product, format_currency(total_sum_by_product[product]), local_currency.replace('EUR', '€'))
+    print 'Total: {1} {2}'.format(corporation, format_currency(total_sum), local_currency.replace('EUR', '€'))
 
 # -------------------------------------------------------------------------------------------------------------------------------------
 
