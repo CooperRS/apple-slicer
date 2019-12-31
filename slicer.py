@@ -201,6 +201,7 @@ def print_sales_by_corporation(sales, currencies, no_subtotals, only_subtotals):
 
     total_sum = Decimal(0)
     total_sum_by_product = {}
+    total_quantity_by_product = {}
     corporations = {}
 
     for country in sales:
@@ -209,11 +210,13 @@ def print_sales_by_corporation(sales, currencies, no_subtotals, only_subtotals):
     for corporation in corporations:
         corporation_sum = Decimal(0)
         corporation_sum_by_product = {}
+        corporation_quantity_by_product = {}
         print '\n\n' + apple.address(corporation)
 
         for countrycode in corporations[corporation]:
             country_sum = Decimal(0)
             country_sum_by_product = {}
+            country_quantity_by_product = {}
             country_currency = currencies[countrycode]
             products_sold = corporations[corporation][countrycode]
 
@@ -228,12 +231,19 @@ def print_sales_by_corporation(sales, currencies, no_subtotals, only_subtotals):
                 # Make sure by product keys exist
                 if product not in total_sum_by_product:
                     total_sum_by_product[product] = Decimal(0)
+                    total_quantity_by_product[product] = Decimal(0)
                 if product not in corporation_sum_by_product:
                     corporation_sum_by_product[product] = Decimal(0)
+                    corporation_quantity_by_product[product] = Decimal(0)
                 if product not in country_sum_by_product:
                     country_sum_by_product[product] = Decimal(0)
+                    country_quantity_by_product[product] = Decimal(0)
 
                 quantity, amount = products_sold[product]
+
+                country_quantity_by_product[product] += quantity
+                corporation_quantity_by_product[product] += quantity
+                total_quantity_by_product[product] += quantity
 
                 # subtract local tax(es) if applicable in country (f. ex. in JPY)
                 amount -= amount - amount * tax_factor
@@ -262,12 +272,12 @@ def print_sales_by_corporation(sales, currencies, no_subtotals, only_subtotals):
 
         print '\n'
         for product in corporation_sum_by_product.keys():
-            print '{0} {1} Subtotal: {2} {3}'.format(product, corporation, format_currency(corporation_sum_by_product[product]), local_currency.replace('EUR', '€'))
+            print '{0} {1} Subtotal: {2} {3} (Quantity: {4})'.format(product, corporation, format_currency(corporation_sum_by_product[product]), local_currency.replace('EUR', '€'), corporation_quantity_by_product[product])
         print '{0} Subtotal: {1} {2}'.format(corporation, format_currency(corporation_sum), local_currency.replace('EUR', '€'))
 
     print '\n'
     for product in total_sum_by_product.keys():
-        print '{0} Total: {1} {2}'.format(product, format_currency(total_sum_by_product[product]), local_currency.replace('EUR', '€'))
+        print '{0} Total: {1} {2} (Quantity: {3})'.format(product, format_currency(total_sum_by_product[product]), local_currency.replace('EUR', '€'), total_quantity_by_product[product])
     print 'Total: {1} {2}'.format(corporation, format_currency(total_sum), local_currency.replace('EUR', '€'))
 
 # -------------------------------------------------------------------------------------------------------------------------------------
