@@ -89,6 +89,7 @@ europe = {
 'LR': 'Liberia',
 'LT': 'Lithuania',
 'LU': 'Luxembourg',
+'MA': 'Morocco',
 'MO': 'Macao',
 'MK': 'Macedonia',
 'MG': 'Madagascar',
